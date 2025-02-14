@@ -1,0 +1,32 @@
+.landing-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 93.5vh;
+    background: linear-gradient(135deg, #1890ff, #001529);
+    padding: 20px;
+  }
+  
+  .landing-card {
+    width: 400px;
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    background: #fff;
+  }
+  
+  .landing-title {
+    color: #1890ff;
+  }
+  
+  .landing-text {
+    color: #555;
+    font-size: 16px;
+  }
+  
+  .landing-button {
+    margin-top: 10px;
+    border-radius: 6px;
+  }
+  

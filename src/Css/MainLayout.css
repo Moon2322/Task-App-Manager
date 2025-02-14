@@ -1,0 +1,29 @@
+.main-layout {
+    height: 98vh;
+  }
+  
+  .sidebar {
+    width: 200px;
+  }
+  
+  .logo {
+    color: white;
+    text-align: center;
+    padding: 16px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  
+  .header {
+    background: #1890ff;
+    color: white;
+    text-align: center;
+    font-size: 18px;
+    padding: 10px;
+  }
+  
+  .content {
+    padding: 20px;
+    background: #f5f5f5;
+  }
+  
