@@ -1,0 +1,11 @@
+.groups-page {
+    padding: 24px;
+  }
+  
+  .groups-page .ant-list {
+    margin-top: 16px;
+  }
+  
+  .groups-page .ant-card {
+    margin-bottom: 16px;
+  }

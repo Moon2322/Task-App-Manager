@@ -26,15 +26,31 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model("User", UserSchema);
 
 const TaskSchema = new mongoose.Schema({
-    Nametask: String,
-    Description: String,
-    category: String,
-    status: Number,
-    deadline: Date,
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } 
-  });
+  Nametask: { type: String, required: true },
+  Description: { type: String },
+  category: { type: String },
+  status: { type: Number, default: 0 }, 
+  deadline: { type: Date },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+  group: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' }, 
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+  assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  createdAt: { type: Date, default: Date.now } 
+});
   
   const Task = mongoose.model("Task", TaskSchema);
+
+
+  const GroupSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], 
+    createdAt: { type: Date, default: Date.now }
+  });
+  
+  const Group = mongoose.model('Group', GroupSchema);
+  
 
 const verifyToken = (req, res, next) => {
     const token = req.header("Authorization")?.replace("Bearer ", ""); 
@@ -75,13 +91,13 @@ app.post('/login', async (req, res) => {
         const token = jwt.sign(
           { userId: user._id, username: user.username },
           process.env.JWT_SECRET, 
-          { expiresIn: '10m' } 
+          { expiresIn: '30m' } 
         );
   
         res.status(200).json({
           message: "Inicio de sesión exitoso",
           token: token, 
-          user: { username: user.username, email: user.email }
+          user: { userId: user._id, username: user.username, email: user.email }
         });
       } else {
         res.status(400).json({ message: "Contraseña incorrecta" });
@@ -116,20 +132,51 @@ app.post('/register', async (req, res) => {
 
   app.post('/tasks', verifyToken, async (req, res) => {
     try {
-      const { Nametask, Description, category, status, deadline } = req.body;
+      const { Nametask, Description, category, deadline, group, assignedTo } = req.body;
   
-      if (!Nametask || status === undefined || status === null) {
-        return res.status(400).json({ message: 'Nametask y status son campos obligatorios' });
+      if (!Nametask) {
+        return res.status(400).json({ message: 'Nametask es un campo obligatorio' });
       }
-      
+  
+      if (group) {
+        const groupExists = await Group.findById(group);
+        if (!groupExists) {
+          return res.status(400).json({ message: 'El grupo no existe' });
+        }
+      }
+  
+      if (assignedTo && !Array.isArray(assignedTo)) {
+        return res.status(400).json({ message: 'assignedTo debe ser un array de emails' });
+      }
+  
+      let assignedUserIds = [];
+      if (assignedTo && assignedTo.length > 0) {
+        const users = await User.find({ email: { $in: assignedTo } });
+  
+        if (users.length !== assignedTo.length) {
+          const missingEmails = assignedTo.filter(
+            (email) => !users.some((user) => user.email === email)
+          );
+          return res.status(400).json({
+            message: 'Uno o más emails no corresponden a usuarios existentes',
+            missingEmails,
+          });
+        }
+  
+        assignedUserIds = users.map((user) => user._id);
+      }
   
       const newTask = new Task({
         Nametask,
         Description,
         category,
-        status,
-        deadline: new Date(deadline), 
+        status: 0, 
+        deadline: new Date(deadline),
         userId: req.user.userId, 
+        group,
+        createdBy: req.user.userId, 
+        assignedTo: assignedUserIds, 
+        createdAt: new Date(), 
       });
   
       await newTask.save();
@@ -137,13 +184,25 @@ app.post('/register', async (req, res) => {
       res.status(201).json({ message: 'Tarea creada exitosamente', task: newTask });
     } catch (error) {
       console.error('Error al crear la tarea:', error);
-      res.status(500).json({ message: 'Error interno del servidor' });
+      res.status(500).json({ message: 'Error interno del servidor', error: error.message });
     }
   });
+
   
-app.get('/tasks', verifyToken, async (req, res) => {
+  app.get('/tasks', verifyToken, async (req, res) => {
     try {
-      const tasks = await Task.find({ userId: req.user.userId });
+      const userId = req.user.userId;
+  
+      const userGroups = await Group.find({ members: userId }).select('_id');
+      const groupIds = userGroups.map(group => group._id);
+  
+  
+      const tasks = await Task.find({
+        $or: [
+          { assignedTo: userId },
+          { group: { $in: groupIds } }
+        ]
+      });
   
       res.status(200).json(tasks);
     } catch (error) {
@@ -151,6 +210,7 @@ app.get('/tasks', verifyToken, async (req, res) => {
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
+  
 
 
   app.put('/tasks/:id/status', verifyToken, async (req, res) => {
@@ -178,6 +238,70 @@ app.get('/tasks', verifyToken, async (req, res) => {
     }
 });
 
+
+app.post('/groups', verifyToken, async (req, res) => {
+  try {
+    const { name, description, members } = req.body;
+
+    if (!name || !Array.isArray(members)) {
+      return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    }
+
+    const users = await User.find({ email: { $in: members } });
+
+    if (users.length !== members.length) {
+      const missingEmails = members.filter(
+        email => !users.some(user => user.email === email)
+      );
+      return res.status(400).json({ 
+        message: 'Uno o más emails no corresponden a usuarios existentes',
+        missingEmails
+      });
+    }
+
+    const memberIds = users.map(user => user._id);
+
+    const newGroup = new Group({
+      name,
+      description,
+      creator: req.user.userId,
+      members: memberIds, 
+      createdAt: new Date()
+    });
+
+    await newGroup.save();
+
+    const populatedGroup = await Group.findById(newGroup._id)
+      .populate('creator', 'username email')
+      .populate('members', 'username email');
+
+    res.status(201).json({ message: 'Grupo creado con éxito', group: populatedGroup });
+  } catch (error) {
+    console.error('Error al crear el grupo:', error);
+    res.status(500).json({ message: 'Error al crear el grupo', error: error.message });
+  }
+});
+
+
+app.get('/user/groups', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId; 
+
+    const groups = await Group.find({
+      $or: [
+        { creator: userId },
+        { members: userId }  
+      ]
+    })
+      .populate('creator', 'username email') 
+      .populate('members', 'username email'); 
+
+    res.status(200).json(groups);
+  } catch (error) {
+    console.error('Error al obtener los grupos:', error);
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor en http://localhost:${PORT}`));

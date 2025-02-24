@@ -31,6 +31,7 @@ const MainLayout = () => {
           items={[
             { key: "/dashboard", icon: <HomeOutlined />, label: "Dashboard" },
             { key: "/perfil", icon: <UserOutlined />, label: "Perfil" },
+            { key: "/Groupspage", icon: <UserOutlined />, label: "Grupos" },
             { key: "/configuracion", icon: <SettingOutlined />, label: "Configuración" },
             { key: "logout", icon: <LogoutOutlined />, label: "Cerrar sesión", danger: true },
           ]}

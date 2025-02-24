@@ -22,8 +22,9 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Guardar el token en localStorage
         localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.user.userId);
+        
         message.success(data.message);
         navigate("/dashboard");
       } else {
