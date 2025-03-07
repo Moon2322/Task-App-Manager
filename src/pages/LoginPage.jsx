@@ -2,7 +2,7 @@ import { Card, Form, Input, Button, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import './../Css/LoginPage.css';
 
-const { Title, Text} = Typography;
+const { Title, Text } = Typography;
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,26 +16,25 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.user.userId);
-        
+
+
         message.success(data.message);
         navigate("/dashboard");
       } else {
-        message.error(data.message);
+        message.error(data.message || "Error al iniciar sesión");
       }
     } catch (error) {
       console.log("Error con el login", error);
-      message.error("Error al iniciar sesión");
+      message.error("Error al conectar con el servidor");
     }
   };
-
 
   const handleRegisterClick = () => {
     navigate('/Registerpage');
@@ -65,8 +64,8 @@ const LoginPage = () => {
               Ingresar
             </Button>
           </Form.Item>
-          </Form>
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+        </Form>
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
           <Text>
             ¿Todavía no tienes una cuenta?{' '}
             <a onClick={handleRegisterClick} style={{ cursor: 'pointer', color: '#1890ff' }}>

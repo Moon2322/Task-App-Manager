@@ -1,4 +1,4 @@
-import express from 'express';
+/* import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -303,5 +303,30 @@ app.get('/user/groups', verifyToken, async (req, res) => {
   }
 });
 
+app.post('/groups/:groupId/add-members', verifyToken, async (req, res) => {
+  try {
+    const { emails } = req.body;
+    const groupId = req.params.groupId;
+
+    const users = await User.find({ email: { $in: emails } });
+
+    if (users.length !== emails.length) {
+      const missingEmails = emails.filter(email => !users.some(user => user.email === email));
+      return res.status(400).json({ message: 'Algunos emails no existen', missingEmails });
+    }
+
+    const userIds = users.map(user => user._id);
+
+    await Group.findByIdAndUpdate(groupId, { $addToSet: { members: { $each: userIds } } });
+
+    res.json({ message: "Miembros agregados exitosamente" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor en http://localhost:${PORT}`));
+ */

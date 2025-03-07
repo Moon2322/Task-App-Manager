@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
@@ -11,7 +10,6 @@ import Groupspage from "./pages/Groupspage";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
-  <React.StrictMode>
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/LandingPage" />} />
@@ -25,5 +23,4 @@ root.render(
 
       </Routes>
     </Router>
-  </React.StrictMode>
 );
