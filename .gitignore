@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Evitar subir credenciales de Firebase
+src/Connection/firebase.credencials.json
