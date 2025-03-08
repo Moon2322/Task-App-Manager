@@ -4,7 +4,7 @@ import admin from 'firebase-admin';
 import fs from 'fs';
 
 // Cargar el archivo JSON de credenciales
-const serviceAccount = JSON.parse(fs.readFileSync('./../src/Connection/firebase.credencials.json', 'utf-8'));
+const serviceAccount = JSON.parse(fs.readFileSync('./firebase.credencials.json', 'utf-8'));
 
 // Inicializar Firebase
 admin.initializeApp({
