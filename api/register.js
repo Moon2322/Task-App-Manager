@@ -1,0 +1,55 @@
+// api/register.js
+import bcrypt from 'bcryptjs';
+import admin from 'firebase-admin';
+
+// Cargar las credenciales desde la variable de entorno
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+
+// Inicializar Firebase
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const db = admin.firestore();
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Método no permitido' });
+  }
+
+  const { username, email, password } = req.body;
+
+  try {
+    // Verificar si el usuario ya existe
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('username', '==', username).get();
+
+    if (!snapshot.empty) {
+      return res.status(400).json({ message: "El usuario ya existe" });
+    }
+
+    // Hashear la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Crear un nuevo usuario en Firestore
+    const newUser = {
+      username,
+      email,
+      password: hashedPassword,
+      rol: "student", // Campo "rol" con valor por defecto "student"
+      last_login: new Date(),
+    };
+
+    // Guardar el usuario en Firestore
+    const userRef = await usersRef.add(newUser);
+
+    // Respuesta exitosa
+    return res.status(201).json({
+      message: "Usuario registrado exitosamente",
+      user: { id: userRef.id, ...newUser }, // Incluir el ID generado por Firestore
+    });
+  } catch (error) {
+    console.log("Error con el registro", error);
+    return res.status(500).json({ error: "Error al registrar usuario" });
+  }
+}

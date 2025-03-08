@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
-  const [createdGroups, setCreatedGroups] = useState([]);
+  const [createdGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   // Hooks
@@ -22,7 +22,6 @@ const Dashboard = () => {
   // Efectos
   useEffect(() => {
     fetchTasks();
-    fetchUserGroups();
   }, []);
 
   // Funciones de manejo de token
@@ -38,7 +37,7 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       if (!token) return handleTokenExpiration();
 
-      const response = await fetch("http://localhost:5000/tasks", {
+      const response = await fetch("/api/tasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -55,40 +54,14 @@ const Dashboard = () => {
     }
   };
 
-  const fetchUserGroups = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return handleTokenExpiration();
   
-      const response = await fetch("http://localhost:5000/user/groups", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
-      const result = await response.json();
-      if (response.status === 401 || result.message === "Token inválido o expirado")
-        return handleTokenExpiration();
-  
-      const userId = localStorage.getItem("userId");
-  
-      // Filtrar grupos donde el usuario es miembro
-      const filteredGroups = result.filter(
-        (group) => group.members.some(member => member._id.toString() === userId)
-      );
-  
-      setCreatedGroups(filteredGroups);
-    } catch (error) {
-      console.error("Error fetching user groups:", error);
-    }
-  };
-  
-
   // Funciones de manejo de tareas
   const updateTaskStatus = async (taskId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return handleTokenExpiration();
 
-      const response = await fetch(`http://localhost:5000/tasks/${taskId}/status`, {
+      const response = await fetch(`/api/updateTaskStatus?id=${taskId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +102,7 @@ const Dashboard = () => {
         assignedTo: assignedEmails,
       };
 
-      const response = await fetch("http://localhost:5000/tasks", {
+      const response = await fetch("/api/createTask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +144,7 @@ const Dashboard = () => {
         members,
       };
 
-      const response = await fetch("http://localhost:5000/groups", {
+      const response = await fetch("/api/createGroup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -189,42 +162,18 @@ const Dashboard = () => {
       message.success("Grupo creado exitosamente!");
       setIsGroupModalVisible(false);
       groupForm.resetFields();
-      fetchUserGroups();
     } catch (error) {
       console.error("Error:", error);
       message.error(error.message || "Error al crear el grupo");
     }
   };
 
-/*   // Funciones auxiliares
-  const getStatusText = (status) => {
-    switch (status) {
-      case 0: return "In Progress";
-      case 1: return "Done";
-      case 2: return "Paused";
-      case 3: return "Revision";
-      default: return "Unknown";
-    }
-  };
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 0: return "in-progress";
-      case 1: return "done";
-      case 2: return "paused";
-      case 3: return "revision";
-      default: return "";
-    }
-  }; */
-
   // Filtrado de tareas
   const displayedTasks = selectedGroup
     ? tasks.filter((task) => task.group && task.group.toString() === selectedGroup.toString())
     : tasks.filter((task) => !task.group);
 
-
-
-  // Renderizado
+   // Renderizado
   return (
     <div className="dashboard-container">
       <Card className="dashboard-card">
@@ -255,9 +204,9 @@ const Dashboard = () => {
         </Button>
         {createdGroups.map((group) => (
           <Button
-            key={group._id}
-            onClick={() => setSelectedGroup(group._id)}
-            type={selectedGroup === group._id ? "primary" : "default"}
+            key={group.id} // Cambiamos group._id por group.id
+            onClick={() => setSelectedGroup(group.id)}
+            type={selectedGroup === group.id ? "primary" : "default"}
           >
             {group.name}
           </Button>
@@ -265,33 +214,31 @@ const Dashboard = () => {
       </div>
 
       <div className="kanban-board">
-  {["In Progress", "Done", "Paused", "Revision"].map((statusLabel, index) => (
-    <div key={index} className="kanban-column">
-      <Title level={3} className="kanban-column-title">{statusLabel}</Title>
-      {displayedTasks
-        .filter((task) => task.status === index)
-        .map((task) => (
-          <Card key={task._id} className="task-card">
-            <Title level={4} className="task-title">{task.Nametask}</Title>
-            <Paragraph>{task.Description}</Paragraph>
-            
-            <Select
-              value={task.status}
-              style={{ width: "100%" }}
-              onChange={(newStatus) => updateTaskStatus(task._id, newStatus)}
-            >
-              <Option value={0}>In Progress</Option>
-              <Option value={1}>Done</Option>
-              <Option value={2}>Paused</Option>
-              <Option value={3}>Revision</Option>
-            </Select>
-          </Card>
+        {["In Progress", "Done", "Paused", "Revision"].map((statusLabel, index) => (
+          <div key={index} className="kanban-column">
+            <Title level={3} className="kanban-column-title">{statusLabel}</Title>
+            {displayedTasks
+              .filter((task) => task.status === index)
+              .map((task) => (
+                <Card key={task.id} className="task-card"> {/* Cambiamos task._id por task.id */}
+                  <Title level={4} className="task-title">{task.Nametask}</Title>
+                  <Paragraph>{task.Description}</Paragraph>
+                  <Select
+                    value={task.status}
+                    style={{ width: "100%" }}
+                    onChange={(newStatus) => updateTaskStatus(task.id, newStatus)} 
+                  >
+                    <Option value={0}>In Progress</Option>
+                    <Option value={1}>Done</Option>
+                    <Option value={2}>Paused</Option>
+                    <Option value={3}>Revision</Option>
+                  </Select>
+                </Card>
+              ))}
+          </div>
         ))}
-    </div>
-  ))}
-</div>
-
-
+      </div>
+    
 
 
 

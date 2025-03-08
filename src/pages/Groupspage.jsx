@@ -22,7 +22,7 @@ const GroupsPage = () => {
       const token = localStorage.getItem("token");
       if (!token) return handleTokenExpiration();
 
-      const response = await fetch("http://localhost:5000/user/groups", {
+      const response = await fetch("/api/getUserGroups", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -72,7 +72,7 @@ const GroupsPage = () => {
       const token = localStorage.getItem("token");
       if (!token) return handleTokenExpiration();
 
-      const response = await fetch(`http://localhost:5000/groups/${selectedGroupId}/add-members`, {
+      const response = await fetch(`/api/groups/${selectedGroupId}/add-members`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,10 +104,10 @@ const GroupsPage = () => {
   const userId = localStorage.getItem("userId");
 
   const createdGroups = groups.filter(
-    (group) => group.creator._id.toString() === userId
+    (group) => group.creator === userId // Cambiamos group.creator._id por group.creator
   );
   const memberGroups = groups.filter(
-    (group) => group.creator._id.toString() !== userId
+    (group) => group.creator !== userId // Cambiamos group.creator._id por group.creator
   );
 
   return (

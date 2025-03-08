@@ -26,3 +26,4 @@ dist-ssr
 
 # Evitar subir credenciales de Firebase
 src/Connection/firebase.credencials.json
+.vercel
