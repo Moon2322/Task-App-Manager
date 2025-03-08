@@ -1,16 +1,14 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import admin from 'firebase-admin';
-import fs from 'fs';
 
-// Cargar el archivo JSON de credenciales
-const serviceAccount = JSON.parse(fs.readFileSync('./firebase.credencials.json', 'utf-8'));
+// Cargar las credenciales desde la variable de entorno
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
 // Inicializar Firebase
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
-
 const db = admin.firestore();
 
 export default async function handler(req, res) {
