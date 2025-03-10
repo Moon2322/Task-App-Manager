@@ -1,11 +1,8 @@
-// api/register.js
 import bcrypt from 'bcryptjs';
 import admin from 'firebase-admin';
 
-// Cargar las credenciales desde la variable de entorno
 const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
 
-// Inicializar Firebase
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -36,17 +33,15 @@ export default async function handler(req, res) {
       username,
       email,
       password: hashedPassword,
-      rol: "student", // Campo "rol" con valor por defecto "student"
+      rol: "student", 
       last_login: new Date(),
     };
 
-    // Guardar el usuario en Firestore
     const userRef = await usersRef.add(newUser);
 
-    // Respuesta exitosa
     return res.status(201).json({
       message: "Usuario registrado exitosamente",
-      user: { id: userRef.id, ...newUser }, // Incluir el ID generado por Firestore
+      user: { id: userRef.id, ...newUser }, 
     });
   } catch (error) {
     console.log("Error con el registro", error);

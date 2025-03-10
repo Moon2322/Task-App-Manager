@@ -12,7 +12,7 @@ const RegisterPage = () => {
     const { username, email, password } = values;
 
     try {
-      const response = await fetch("http://localhost:5000/register", {
+      const response = await fetch("/api/register",{
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,8 +45,7 @@ const RegisterPage = () => {
           <Form.Item
             label="Usuario"
             name="username"
-            rules={[{ required: true, message: 'Por favor ingresa tu usuario' }]}
-          >
+            rules={[{ required: true, message: 'Por favor ingresa tu usuario' }]}>
             <Input className="login-input" />
           </Form.Item>
           <Form.Item
@@ -62,15 +61,13 @@ const RegisterPage = () => {
                   return Promise.reject('Por favor ingresa un email válido');
                 },
               },
-            ]}
-          >
+            ]}>
             <Input className="login-input" />
           </Form.Item>
           <Form.Item
             label="Contraseña"
             name="password"
-            rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
-          >
+            rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}>
             <Input.Password className="login-input" />
           </Form.Item>
           <Form.Item>

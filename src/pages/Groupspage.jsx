@@ -6,7 +6,8 @@ import "./../Css/Groupspage.css";
 const { Title, Text } = Typography;
 
 const GroupsPage = () => {
-  const [groups, setGroups] = useState([]);
+  const [creatorGroups, setCreatorGroups] = useState([]);
+  const [memberGroups, setMemberGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState(null);
@@ -36,7 +37,11 @@ const GroupsPage = () => {
         throw new Error("Error al obtener los grupos");
       }
 
-      setGroups(result);
+      const creatorGroups = result.creatorGroups;
+      const memberGroups = result.memberGroups;
+
+      setCreatorGroups(creatorGroups);
+      setMemberGroups(memberGroups);
       setLoading(false);
     } catch (error) {
       console.error("Error:", error);
@@ -72,7 +77,7 @@ const GroupsPage = () => {
       const token = localStorage.getItem("token");
       if (!token) return handleTokenExpiration();
 
-      const response = await fetch(`/api/groups/${selectedGroupId}/add-members`, {
+      const response = await fetch(`/api/addGroupMembers?groupId=${selectedGroupId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,22 +98,13 @@ const GroupsPage = () => {
       }
 
       message.success("Miembros agregados exitosamente!");
-      fetchUserGroups(); // Refrescar la lista de grupos
+      fetchUserGroups(); 
       handleCloseModal();
     } catch (error) {
       console.error("Error:", error);
       message.error("No se pudo agregar a los miembros.");
     }
   };
-
-  const userId = localStorage.getItem("userId");
-
-  const createdGroups = groups.filter(
-    (group) => group.creator === userId // Cambiamos group.creator._id por group.creator
-  );
-  const memberGroups = groups.filter(
-    (group) => group.creator !== userId // Cambiamos group.creator._id por group.creator
-  );
 
   return (
     <div className="groups-page">
@@ -117,12 +113,12 @@ const GroupsPage = () => {
       <Title level={3}>Grupos que he creado</Title>
       <List
         loading={loading}
-        dataSource={createdGroups}
+        dataSource={creatorGroups}
         renderItem={(group) => (
           <Card
             title={group.name}
             extra={
-              <Button type="primary" onClick={() => handleOpenModal(group._id)}>
+              <Button type="primary" onClick={() => handleOpenModal(group.id)}>
                 Agregar nuevo integrante
               </Button>
             }
@@ -156,7 +152,6 @@ const GroupsPage = () => {
         )}
       />
 
-      {/* Modal para agregar miembros */}
       <Modal
         title="Agregar miembros al grupo"
         visible={isModalVisible}

@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     if (isMatch) {
       // Generar token JWT
       const token = jwt.sign(
-        { userId: userDoc.id, username: user.username },
+        { userId: userDoc.id, username: user.username, email: user.email },
         process.env.JWT_SECRET,
         { expiresIn: '30m' }
       );

@@ -11,7 +11,6 @@ const LoginPage = () => {
     const { username, password } = values;
 
     try {
-      // Cambia la URL a la ruta de tu función serverless en Vercel
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
@@ -26,11 +25,9 @@ const LoginPage = () => {
         // Guardar el token en localStorage
         localStorage.setItem('token', data.token);
 
-        // Mostrar mensaje de éxito y redirigir al dashboard
         message.success(data.message);
         navigate("/dashboard");
       } else {
-        // Mostrar mensaje de error
         message.error(data.message || "Error al iniciar sesión");
       }
     } catch (error) {

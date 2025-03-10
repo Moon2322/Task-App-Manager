@@ -7,31 +7,67 @@ const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
 const Dashboard = () => {
-  // Estados
   const [tasks, setTasks] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
   const [createdGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [creatorGroups, setCreatorGroups] = useState([]);
+  const [memberGroups, setMemberGroups] = useState([]);
 
-  // Hooks
   const [form] = Form.useForm();
   const [groupForm] = Form.useForm();
   const navigate = useNavigate();
 
-  // Efectos
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchUserGroups();
+    fetchTasks(); 
+    
+    const intervalId = setInterval(() => {
+      fetchTasks(); 
+    }, 2000); 
+  
+    return () => clearInterval(intervalId);
+  }, []); 
+  
+  
+  const fetchUserGroups = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return handleTokenExpiration();
 
-  // Funciones de manejo de token
-  const handleTokenExpiration = () => {
-    message.error("Tu sesión ha expirado. Inicia sesión nuevamente.");
-    localStorage.removeItem("token");
-    setTimeout(() => navigate("/LoginPage"), 1000);
+      const response = await fetch("/api/getUserGroups", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const result = await response.json();
+      if (response.status === 401 || result.message === "Token inválido o expirado") {
+        return handleTokenExpiration();
+      }
+
+      if (!response.ok) {
+        message.error("Error al obtener los grupos");
+        throw new Error("Error al obtener los grupos");
+      }
+
+      const creatorGroups = result.creatorGroups;
+      const memberGroups = result.memberGroups;
+
+      setCreatorGroups(creatorGroups);
+      setMemberGroups(memberGroups);
+    } catch (error) {
+      console.error("Error:", error);
+      message.error("Error al cargar los grupos");
+    }
   };
 
-  // Funciones de fetch
+  const handleTokenExpiration = () => {
+    localStorage.removeItem("token");
+    setTimeout(() => {
+      navigate("/LoginPage");
+    }, 1000);
+  };
+
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -53,9 +89,7 @@ const Dashboard = () => {
       message.error("Error al obtener las tareas");
     }
   };
-
   
-  // Funciones de manejo de tareas
   const updateTaskStatus = async (taskId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
@@ -127,7 +161,6 @@ const Dashboard = () => {
     }
   };
 
-  // Funciones de manejo de grupos
   const createGroup = async (groupData) => {
     try {
       const token = localStorage.getItem("token");
@@ -168,12 +201,10 @@ const Dashboard = () => {
     }
   };
 
-  // Filtrado de tareas
   const displayedTasks = selectedGroup
     ? tasks.filter((task) => task.group && task.group.toString() === selectedGroup.toString())
     : tasks.filter((task) => !task.group);
 
-   // Renderizado
   return (
     <div className="dashboard-container">
       <Card className="dashboard-card">
@@ -202,9 +233,9 @@ const Dashboard = () => {
         >
           Tareas asignadas directamente
         </Button>
-        {createdGroups.map((group) => (
+        {[...createdGroups, ...memberGroups].map((group) => (
           <Button
-            key={group.id} // Cambiamos group._id por group.id
+            key={group.id} 
             onClick={() => setSelectedGroup(group.id)}
             type={selectedGroup === group.id ? "primary" : "default"}
           >
@@ -220,7 +251,7 @@ const Dashboard = () => {
             {displayedTasks
               .filter((task) => task.status === index)
               .map((task) => (
-                <Card key={task.id} className="task-card"> {/* Cambiamos task._id por task.id */}
+                <Card key={task.id} className="task-card"> 
                   <Title level={4} className="task-title">{task.Nametask}</Title>
                   <Paragraph>{task.Description}</Paragraph>
                   <Select
@@ -239,9 +270,6 @@ const Dashboard = () => {
         ))}
       </div>
     
-
-
-
       <Modal
         title="Agregar Tarea"
         open={isModalVisible}
@@ -274,14 +302,14 @@ const Dashboard = () => {
             <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" />
           </Form.Item>
           <Form.Item name="group" label="Grupo (opcional)">
-            <Select placeholder="Seleccione un grupo">
-              {createdGroups.map((group) => (
-                <Option key={group._id} value={group._id}>
-                  {group.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select placeholder="Seleccione un grupo">
+                {creatorGroups.map((group) => (
+                  <Option key={group.id} value={group.id}>
+                    {group.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
           <Form.Item
             name="assignedTo"
             label="Asignar a (opcional)"
