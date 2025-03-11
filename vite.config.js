@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // Usa './' en lugar de '/'
+  base: '/', // Asegúrate de que sea '/'
   build: {
     outDir: 'dist'
   }
